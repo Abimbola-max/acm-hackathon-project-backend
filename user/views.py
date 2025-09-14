@@ -4,48 +4,47 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import logout
 from .serializers import RegisterSerializer, CustomTokenObtainPairSerializer, ProfileSerializer, ChangePasswordSerializer, ChangeUsernameSerializer, UserSerializer
 from .models import CustomUser
 
-class RegisterView(generics.CreateAPIView):
-    queryset = CustomUser.objects.all()
-    permission_classes = (AllowAny,)
-    serializer_class = RegisterSerializer
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            "message": "User registered successfully",
-            "user": UserSerializer(user).data,
-            "tokens": {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh)
-            }
-        }, status=status.HTTP_201_CREATED)
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user_serializer = UserSerializer(user)
+            return Response({
+                'message': 'You have registered successfully',
+                'user': user_serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(TokenObtainPairView):
-    permission_classes = (AllowAny,)
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = CustomUser.objects.filter(email=request.data.get('email')).first()
         return Response({
-            "message": "Login successful",
-            "tokens": response.data
-        })
+            'message': 'Login Successful.',
+            'refresh': serializer.validated_data['refresh'],
+            'access': serializer.validated_data['access'],
+            'user': UserSerializer(user).data
+        }, status=status.HTTP_200_OK)
 
 class LogoutView(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         logout(request)
-        request.user.is_active = False  # Note: is_active in Django typically for account activation, but per req, set to False on logout
+        request.user.is_active = False
         request.user.save()
         return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
 
@@ -56,7 +55,6 @@ class MeView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
-# Artist Profile Views (assuming user is artist; extend permissions as needed)
 
 class ArtistProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated,)
@@ -67,18 +65,16 @@ class ArtistProfileView(generics.RetrieveUpdateAPIView):
 
 class DashboardSummaryView(generics.RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = ProfileSerializer  # Reuse, or create specific for stats
+    serializer_class = ProfileSerializer
 
     def get(self, request, *args, **kwargs):
         user = request.user
         stats = {
-            "total_tracks": 15,  # Calculate properly in production
+            "total_tracks": 15,
             "total_streams": 1245893,
             "total_platforms": user.total_platforms
         }
         return Response(stats)
-
-# Additional views for change password and username
 
 class ChangePasswordView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)

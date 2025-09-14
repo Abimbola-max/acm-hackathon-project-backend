@@ -1,11 +1,10 @@
-from django.db import models
-
-# Create your models here.
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from cloudinary.models import CloudinaryField
 
 class CustomUser(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=255, blank=True, null=True)
     avatar_url = CloudinaryField('avatar', blank=True, null=True)
@@ -16,6 +15,8 @@ class CustomUser(AbstractUser):
     social_links = models.JSONField(default=dict, blank=True)
     total_platforms = models.IntegerField(default=0)
 
+    USERNAME_FIELD = 'email'  # Use email for authentication
+    REQUIRED_FIELDS = ['username']  # Username still required for admin, but can be set during registration
 
     def __str__(self):
-        return self.username
+        return self.username or self.email
