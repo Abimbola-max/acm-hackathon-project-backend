@@ -1,13 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q, DateField
 from django.db.models.functions import TruncMonth, TruncWeek
-from .models import RoyaltyStatement, Platform, Track, Album
+from rest_framework.parsers import MultiPartParser, JSONParser
+from django.utils import timezone
+from datetime import timedelta
+from .models import RoyaltyStatement, Platform, Track, Album, CsvUpload
 from .serializers import (
     DashboardSummarySerializer, StreamsOverTimeSerializer,
     TopTracksSerializer, PlatformSerializer, AlbumSerializer,
-    TrackSerializer
+    TrackSerializer, RoyaltyStatementSerializer, CsvUploadSerializer
 )
 
 
@@ -171,3 +174,80 @@ class TrackListView(APIView):
         tracks = Track.objects.filter(artist=user)
         serializer = TrackSerializer(tracks, many=True)
         return Response(serializer.data)
+
+
+class RoyaltyStatementListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """GET /api/royalty-statements - List all royalty statements"""
+        user = request.user
+        statements = RoyaltyStatement.objects.filter(artist=user).select_related('track', 'platform')
+        serializer = RoyaltyStatementSerializer(statements, many=True)
+        return Response(serializer.data)
+
+
+class RoyaltyStatementDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        """GET /api/royalty-statements/{id} - Get specific royalty statement"""
+        user = request.user
+        try:
+            statement = RoyaltyStatement.objects.get(id=pk, artist=user)
+            serializer = RoyaltyStatementSerializer(statement)
+            return Response(serializer.data)
+        except RoyaltyStatement.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
+
+
+class CsvUploadListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """GET /api/csv-uploads - List all CSV uploads for the user"""
+        user = request.user
+        uploads = CsvUpload.objects.filter(artist=user).order_by('-uploaded_at')
+        serializer = CsvUploadSerializer(uploads, many=True)
+        return Response(serializer.data)
+
+
+class CsvUploadDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        """GET /api/csv-uploads/{id} - Get specific CSV upload details"""
+        user = request.user
+        try:
+            upload = CsvUpload.objects.get(id=pk, artist=user)
+            serializer = CsvUploadSerializer(upload)
+            return Response(serializer.data)
+        except CsvUpload.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
+
+
+class CsvUploadCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, JSONParser]
+
+    def post(self, request):
+        """POST /api/csv-uploads - Upload and process a CSV file"""
+        user = request.user
+        csv_file = request.FILES.get('file')
+
+        if not csv_file:
+            return Response({'error': 'No file provided'}, status=400)
+
+        # Create upload record
+        upload = CsvUpload.objects.create(
+            artist=user,
+            filename=csv_file.name,
+            status='pending',
+            total_rows=0
+        )
+
+        # TODO: Add your CSV processing logic here
+        # This would parse the CSV and create RoyaltyStatement objects
+
+        serializer = CsvUploadSerializer(upload)
+        return Response(serializer.data, status=201)
