@@ -1,19 +1,18 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q, DateField
-from django.db.models.functions import TruncMonth, TruncWeek
 from rest_framework.parsers import MultiPartParser, JSONParser
-from django.utils import timezone
-from datetime import timedelta
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth, TruncWeek
+import pandas as pd
+import hashlib
+from datetime import datetime
 from .models import RoyaltyStatement, Platform, Track, Album, CsvUpload
 from .serializers import (
     DashboardSummarySerializer, StreamsOverTimeSerializer,
     TopTracksSerializer, PlatformSerializer, AlbumSerializer,
     TrackSerializer, RoyaltyStatementSerializer, CsvUploadSerializer
 )
-
-
 class DashboardSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -242,12 +241,114 @@ class CsvUploadCreateView(APIView):
         upload = CsvUpload.objects.create(
             artist=user,
             filename=csv_file.name,
-            status='pending',
+            status='processing',
             total_rows=0
         )
 
-        # TODO: Add your CSV processing logic here
-        # This would parse the CSV and create RoyaltyStatement objects
+        try:
+            # Process the CSV file
+            df = pd.read_csv(csv_file)
+            upload.total_rows = len(df)
+            upload.save()
 
-        serializer = CsvUploadSerializer(upload)
-        return Response(serializer.data, status=201)
+            success_count = 0
+            error_count = 0
+            error_messages = []
+
+            for index, row in df.iterrows():
+                try:
+                    # Extract data from CSV row (adjust column names as needed)
+                    track_name = row.get('track_name', '')
+                    platform_name = row.get('platform', '')
+                    streams = int(row.get('streams', 0))
+                    revenue = float(row.get('revenue', 0.0))
+                    currency = row.get('currency', 'USD')
+                    period_end_str = row.get('period_end', '')
+
+                    # Parse date (handle different formats)
+                    try:
+                        period_end = datetime.strptime(period_end_str, '%Y-%m-%d').date()
+                    except:
+                        period_end = datetime.strptime(period_end_str, '%d/%m/%Y').date()
+
+                    period_start = period_end.replace(day=1)  # Assuming monthly reports
+
+                    # Get or create track
+                    track, created = Track.objects.get_or_create(
+                        artist=user,
+                        name=track_name,
+                        defaults={'name': track_name}
+                    )
+
+                    # Get platform
+                    try:
+                        platform = Platform.objects.get(name__iexact=platform_name)
+                    except Platform.DoesNotExist:
+                        platform = Platform.objects.create(
+                            name=platform_name,
+                            api_name=platform_name.lower().replace(' ', '_')
+                        )
+
+                    # Generate unique hash for this data row to prevent duplicates
+                    source_string = f"{user.id}-{track.id}-{platform.id}-{period_end}-{streams}-{revenue}-{currency}"
+                    source_row_hash = hashlib.sha256(source_string.encode()).hexdigest()
+
+                    # Check for duplicate before creating
+                    if not RoyaltyStatement.objects.filter(source_row_hash=source_row_hash).exists():
+
+                        RoyaltyStatement.objects.create(
+                            artist=user,
+                            track=track,
+                            platform=platform,
+                            upload=upload,
+                            period_start=period_start,
+                            period_end=period_end,
+                            streams=streams,
+                            revenue=revenue,
+                            currency=currency,
+                            source_row_hash=source_row_hash
+                        )
+                        success_count += 1
+                    else:
+                        pass
+
+                except Exception as e:
+                    error_count += 1
+                    error_messages.append(f"Row {index + 1}: {str(e)}")
+                    continue
+
+            # Update upload status
+            upload.success_count = success_count
+            upload.error_count = error_count
+            upload.processed_rows = success_count + error_count
+
+            if error_messages:
+                upload.error_log = "\n".join(error_messages[:10])
+
+            if upload.processed_rows >= upload.total_rows:
+                upload.status = 'completed' if error_count == 0 else 'completed_with_errors'
+
+            upload.save()
+
+            response_data = {
+                'message': f'Processed {success_count} rows successfully',
+                'errors': error_count,
+                'upload_id': upload.id
+            }
+
+            if error_count > 0:
+                response_data['error_samples'] = error_messages[:3]  # Show first 3 errors
+
+            serializer = CsvUploadSerializer(upload)
+            return Response(serializer.data, status=201)
+
+        except Exception as e:
+            # Mark upload as failed
+            upload.status = 'failed'
+            upload.error_log = str(e)
+            upload.save()
+
+            return Response({
+                'error': 'Failed to process CSV file',
+                'details': str(e)
+            }, status=500)
