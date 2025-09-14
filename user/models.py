@@ -15,8 +15,8 @@ class CustomUser(AbstractUser):
     social_links = models.JSONField(default=dict, blank=True)
     total_platforms = models.IntegerField(default=0)
 
-    USERNAME_FIELD = 'email'  # Use email for authentication
-    REQUIRED_FIELDS = ['username']  # Username still required for admin, but can be set during registration
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         return self.username or self.email
