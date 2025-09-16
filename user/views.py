@@ -51,9 +51,9 @@ class LogoutView(APIView):
                 'message': 'Logged out successfully'
             }, status=status.HTTP_200_OK)
         except TokenError as e:
-            if str(e) in ['Token is blacklisted', 'Token is invalid or expired']:
+            if 'blacklisted' in str(e).lower() or 'expired' in str(e).lower():
                 return Response({
-                    'message': 'Logged out successfully (token already invalid or blacklisted)'
+                    'message': 'Logged out successfully (token already blacklisted or expired)'
                 }, status=status.HTTP_200_OK)
             return Response({
                 'error': f'Invalid token: {str(e)}'
