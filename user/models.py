@@ -7,7 +7,7 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=255, blank=True, null=True)
-    avatar_url = CloudinaryField('avatar', blank=True, null=True)
+    avatar_url = models.ImageField(upload_to='avatars/', blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     country = models.CharField(max_length=2, blank=True, null=True)
     city = models.CharField(max_length=255, blank=True, null=True)

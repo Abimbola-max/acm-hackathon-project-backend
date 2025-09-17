@@ -4,6 +4,6 @@ djangorestframework-simplejwt==5.3.1
 psycopg==3.2.3
 python-dotenv==1.0.1
 gunicorn==23.0.0
-cloudinary==1.44.1
-django-cloudinary-storage==0.3.0
+#cloudinary==1.44.1
+#django-cloudinary-storage==0.3.0
 pandas==2.2.3

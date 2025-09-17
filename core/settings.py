@@ -42,8 +42,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'cloudinary',
-    'cloudinary_storage',
+    # 'cloudinary',
+    # 'cloudinary_storage',
     'user',
     'analytics'
 ]
@@ -67,17 +67,18 @@ SIMPLE_JWT = {
     'BLACKLIST_ENABLED': False
 }
 
-cloudinary.config(
-    cloud_name=os.getenv('CLOUD_NAME'),
-    api_key=os.getenv('API_KEY'),
-    api_secret=os.getenv('API_SECRET'),
-    secure=True
-)
-CLOUDINARY_STORAGE = {
-    'CLOUDINARY_URL': os.getenv('CLOUDINARY_URL')
-}
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
+# cloudinary.config(
+#     cloud_name=os.getenv('CLOUD_NAME'),
+#     api_key=os.getenv('API_KEY'),
+#     api_secret=os.getenv('API_SECRET'),
+#     secure=True
+# )
+# CLOUDINARY_STORAGE = {
+#     'CLOUDINARY_URL': os.getenv('CLOUDINARY_URL')
+# }
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
