@@ -63,15 +63,6 @@ SIMPLE_JWT = {
     'BLACKLIST_ENABLED': False
 }
 
-# cloudinary.config(
-#     cloud_name=os.getenv('CLOUD_NAME'),
-#     api_key=os.getenv('API_KEY'),
-#     api_secret=os.getenv('API_SECRET'),
-#     secure=True
-# )
-# CLOUDINARY_STORAGE = {
-#     'CLOUDINARY_URL': os.getenv('CLOUDINARY_URL')
-# }
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
