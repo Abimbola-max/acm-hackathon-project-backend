@@ -25,3 +25,4 @@ media/
 # OS generated files
 .DS_Store
 Thumbs.db
+get-pip.py
