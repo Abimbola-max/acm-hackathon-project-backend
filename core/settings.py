@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'user',
     'analytics',
     'intelligence',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -68,6 +69,7 @@ DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -145,6 +147,16 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # React development server
+    "songseed.vercel.app",  # Replace with your deployed frontend URL
+]
+
+CORS_ALLOW_CREDENTIALS = True  # Allow cookies and authorization headers
+CORS_ALLOW_ALL_ORIGINS = True  # Remove this in production
+
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
