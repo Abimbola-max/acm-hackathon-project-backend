@@ -1,2 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-.env
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables
+*.env
+
+# Django
+staticfiles/
+media/
+*.sqlite3
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
