@@ -151,7 +151,7 @@ USE_TZ = True
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # React development server
-    "songseed.vercel.app",  # Replace with your deployed frontend URL
+    "https://songseed.vercel.app",  # Replace with your deployed frontend URL
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies and authorization headers
