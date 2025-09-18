@@ -37,7 +37,7 @@ requires-dist = [
     { name = "pandas", specifier = "==2.2.3" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "psycopg", specifier = "==3.2.3" },
-    { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "psycopg2-binary", specifier = "==2.9.10" },
     { name = "python-dotenv", specifier = "==1.0.1" },
 ]
 
