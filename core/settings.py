@@ -26,6 +26,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+print("DEBUG setting is:", DEBUG)
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
 # Application definition
@@ -52,6 +54,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+   ' APPEND_SLASH': True,
 }
 
 from datetime import timedelta
