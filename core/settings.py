@@ -157,7 +157,6 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies and authorization headers
-CORS_ALLOW_ALL_ORIGINS = True  # Remove this in production
 
 
 STATIC_URL = 'static/'
