@@ -152,6 +152,7 @@ USE_TZ = True
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React development server
     "http://localhost:5173",  # React development server
     "https://songseed.vercel.app",  # Replace with your deployed frontend URL
 ]
