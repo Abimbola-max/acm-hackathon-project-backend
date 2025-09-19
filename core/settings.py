@@ -168,11 +168,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'user.CustomUser'
 
-SECURE_SSL_REDIRECT = True  # Redirect all HTTP to HTTPS
-SESSION_COOKIE_SECURE = True  # Cookies only sent over HTTPS
-CSRF_COOKIE_SECURE = True  # CSRF cookie only sent over HTTPS
-
-
 # If behind a proxy (Render), let Django know to trust the forwarded protocol header
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
